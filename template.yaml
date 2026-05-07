@@ -22,29 +22,33 @@ Resources:
   FinsySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Reglas basicas de red
+      GroupDescription: Reglas de red para Finsy
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - IpProtocol: tcp # Acceso SSH
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
+        - IpProtocol: tcp # Interfaz Jenkins
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
+        - IpProtocol: tcp # Acceso Frontend
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp # Acceso Backend API
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
 
-  # 3. Regla de comunicación interna separada (Para evitar la dependencia circular)
-  InternalTrafficRule:
+  # 3. Comunicación Interna para MySQL (3306)
+  MySQLInternalRule:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !Ref FinsySecurityGroup
       IpProtocol: tcp
-      FromPort: 0
-      ToPort: 65535
+      FromPort: 3306
+      ToPort: 3306
       SourceSecurityGroupId: !Ref FinsySecurityGroup
 
   # 4. Instancias EC2
