@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Base de Datos MySQL
+  db:
+    image: mysql:8.0
+    container_name: finsy_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: finsy_db
+    # Cargamos tu script SQL automáticamente al iniciar
+    volumes:
+      - ./Finanzas.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+
+  # API Backend
+  backend:
+    build: ./Backend
+    container_name: finsy_backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=root_password
+      - DB_NAME=finsy_db
+
+  # Aplicación Frontend
+  frontend:
+    build: ./frontend
+    container_name: finsy_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Despliegue Finsy - Infraestructura como Codigo (IaC)
+
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
+
+Resources:
+  # Bucket S3 para el proyecto
+  FinsyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: finsy-mya-deploy-v2026
+
+  # Servidor EC2 con Docker y Proyecto pre-instalado
+  FinsyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t2.micro
+      KeyName: MyA_Key # <--- RECUERDA: Verifica que este nombre sea igual al de tu consola
+      IamInstanceProfile: LabInstanceProfile
+      Tags:
+        - Key: Name
+          Value: Finsy-Server-Prod
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install -y git docker.io
+          systemctl start docker
+          systemctl enable docker
+          usermod -aG docker ubuntu
+          cd /home/ubuntu
+          git clone https://github.com/Racoth505/MyA_ProyectoDevOps.git
