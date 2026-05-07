@@ -1,38 +1,36 @@
 version: '3.8'
 
 services:
-  # Base de Datos MySQL
-  db:
-    image: mysql:8.0
-    container_name: finsy_db
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: finsy_db
-    # Cargamos tu script SQL automáticamente al iniciar
-    volumes:
-      - ./Finanzas.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "3306:3306"
-
-  # API Backend
   backend:
-    build: ./Backend
-    container_name: finsy_backend
+    image: ${BACKEND_IMAGE:-finsy-backend:latest}
+    container_name: finsy-backend-prod
     ports:
       - "5000:5000"
-    depends_on:
-      - db
     environment:
-      - DB_HOST=db
+      # Variables que coinciden con tu código JS (process.env.DB_HOST, etc.)
+      - DB_HOST=${DB_PRIVATE_IP}
       - DB_USER=root
-      - DB_PASSWORD=root_password
-      - DB_NAME=finsy_db
+      - DB_PASSWORD=12345678  # Asegúrate de que coincida con la DB en AWS
+      - DB_NAME=Finanzas
+      - NODE_ENV=production
+    restart: always
+    networks:
+      - finsy-network
 
-  # Aplicación Frontend
   frontend:
-    build: ./frontend
-    container_name: finsy_frontend
+    image: ${FRONTEND_IMAGE:-finsy-frontend:latest}
+    container_name: finsy-frontend-prod
     ports:
       - "80:80"
     depends_on:
       - backend
+    environment:
+      # Usamos la IP Pública del App-Server para que los clientes lleguen al API
+      - REACT_APP_API_URL=http://${APP_PUBLIC_IP}:5000
+    restart: always
+    networks:
+      - finsy-network
+
+networks:
+  finsy-network:
+    driver: bridge
