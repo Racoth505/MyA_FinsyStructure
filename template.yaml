@@ -1,36 +1,85 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Despliegue Finsy - Infraestructura como Codigo (IaC)
+Description: 'Infraestructura Distribuida Finsy - Jenkins, App y Database'
 
 Parameters:
   LatestAmiId:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
+  
+  KeyName:
+    Description: Nombre de la llave SSH
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: vockey
 
 Resources:
-  # Bucket S3 para el proyecto
+  # 1. Bucket S3
   FinsyS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: finsy-mya-deploy-v2026
+      BucketName: !Sub finsy-infra-deploy-${AWS::AccountId}
 
-  # Servidor EC2 con Docker y Proyecto pre-instalado
-  FinsyInstance:
+  # 2. Security Group (Base)
+  FinsySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Reglas basicas de red
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  # 3. Regla de comunicación interna separada (Para evitar la dependencia circular)
+  InternalTrafficRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FinsySecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref FinsySecurityGroup
+
+  # 4. Instancias EC2
+  JenkinsInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.small
+      KeyName: !Ref KeyName
+      IamInstanceProfile: LabInstanceProfile
+      SecurityGroupIds: [!Ref FinsySecurityGroup]
+      Tags:
+        - Key: Name
+          Value: Finsy-Jenkins-Build
+
+  AppInstance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref LatestAmiId
       InstanceType: t2.micro
-      KeyName: MyA_Key # <--- RECUERDA: Verifica que este nombre sea igual al de tu consola
+      KeyName: !Ref KeyName
       IamInstanceProfile: LabInstanceProfile
+      SecurityGroupIds: [!Ref FinsySecurityGroup]
       Tags:
         - Key: Name
-          Value: Finsy-Server-Prod
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          apt-get update -y
-          apt-get install -y git docker.io
-          systemctl start docker
-          systemctl enable docker
-          usermod -aG docker ubuntu
-          cd /home/ubuntu
-          git clone https://github.com/Racoth505/MyA_ProyectoDevOps.git
+          Value: Finsy-App-Server
+
+  DBInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      IamInstanceProfile: LabInstanceProfile
+      SecurityGroupIds: [!Ref FinsySecurityGroup]
+      Tags:
+        - Key: Name
+          Value: Finsy-DB-Server
