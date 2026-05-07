@@ -19,39 +19,33 @@ Resources:
       BucketName: !Sub finsy-infra-deploy-${AWS::AccountId}
 
   # 2. Security Group (Base)
-  FinsySecurityGroup:
+FinsySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Reglas de red para Finsy
       SecurityGroupIngress:
-        - IpProtocol: tcp # Acceso SSH
+        - IpProtocol: tcp #Acceso SSH
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp # Interfaz Jenkins
+        - IpProtocol: tcp #Interfaz Jenkins
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp # Acceso Frontend
+        - IpProtocol: tcp #Acceso Frontend
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp # Acceso Backend API
+        - IpProtocol: tcp #Acceso Backend API
           FromPort: 5000
           ToPort: 5000
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp #MySQl
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
 
-  # 3. Comunicación Interna para MySQL (3306)
-  MySQLInternalRule:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref FinsySecurityGroup
-      IpProtocol: tcp
-      FromPort: 3306
-      ToPort: 3306
-      SourceSecurityGroupId: !Ref FinsySecurityGroup
-
-  # 4. Instancias EC2
+  # 3. Instancias EC2
   JenkinsInstance:
     Type: AWS::EC2::Instance
     Properties:
