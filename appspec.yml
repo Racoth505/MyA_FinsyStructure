@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/MyA_ProyectoDevOps
+hooks:
+  AfterInstall:
+    - location: scripts/start_container.sh
+      timeout: 300
+      runas: root
