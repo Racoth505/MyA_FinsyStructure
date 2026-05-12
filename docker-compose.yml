@@ -21,12 +21,12 @@ services:
     image: ${FRONTEND_IMAGE:-finsy-frontend:latest}
     container_name: finsy-frontend-prod
     ports:
-      - "80:80"
+      - "8081:80"
     depends_on:
       - backend
     environment:
       # Usamos la IP Pública del App-Server para que los clientes lleguen al API
-      - REACT_APP_API_URL=http://54.160.175.193:5000
+      - REACT_APP_API_URL=http://98.81.9.103:5000
     restart: always
     networks:
       - finsy-network
