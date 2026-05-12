@@ -8,7 +8,7 @@ services:
       - "5000:5000"
     environment:
       # Variables que coinciden con tu código JS (process.env.DB_HOST, etc.)
-      - DB_HOST=${DB_PRIVATE_IP}
+      - DB_HOST=172.31.44.216
       - DB_USER=root
       - DB_PASSWORD=12345678  # Asegúrate de que coincida con la DB en AWS
       - DB_NAME=Finanzas
