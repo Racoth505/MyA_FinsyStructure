@@ -21,7 +21,7 @@ services:
     image: ${FRONTEND_IMAGE:-finsy-frontend:latest}
     container_name: finsy-frontend-prod
     ports:
-      - "8081:80"
+      - "80:80"
     depends_on:
       - backend
     environment:
